@@ -1,26 +1,65 @@
 * {
 	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
 }
 
 body {
-	display: grid;
-	grid-template: auto 1fr / 1fr 1fr;
+	display: flex;
+	flex-direction: column;
 	height: 100vh;
-	margin: 0;
-	width: 100vw;
 }
 
-button {
-	grid-column: 1 / -1;
+main {
+	display: flex;
+	flex: 1;
+	min-height: 0;
 }
 
-textarea,
-iframe {
+main explorer {
+	overflow: auto;
+	width: 20%;
+}
+
+main explorer ul {
+	font-family: monospace;
+	list-style: none;
+}
+
+main explorer ul ul {
+	padding-left: 2ch;
+}
+
+main explorer ul li button {
+	background: none;
 	border: none;
+	font: inherit;
+	white-space: nowrap;
+}
+
+main editor,
+main preview {
+	min-width: 0;
+}
+
+main editor {
+	flex: 3;
+}
+
+main preview {
+	flex: 2;
+}
+
+main editor textarea,
+main preview iframe {
+	border: none;
+	display: block;
 	height: 100%;
 	width: 100%;
 }
 
-textarea {
+main editor textarea {
+	background: white;
+	outline: none;
 	resize: none;
 }

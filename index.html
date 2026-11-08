@@ -9,15 +9,25 @@
 </head>
 <body>
 
-<button>Compile document</button>
+<nav>
+	<button>Open folder</button>
+	<button hidden>Create file</button>
+	<button hidden>Create folder</button>
+	<button hidden>Delete file or folder</button>
+	<button hidden disabled>Compile document</button>
+</nav>
 
-<editor>
-	<textarea spellcheck="false"></textarea>
-</editor>
-
-<preview>
-	<iframe></iframe>
-</preview>
+<main>
+	<explorer hidden>
+		<ul></ul>
+	</explorer>
+	<editor hidden>
+		<textarea spellcheck="false" disabled></textarea>
+	</editor>
+	<preview hidden>
+		<iframe></iframe>
+	</preview>
+</main>
 
 </body>
 </html>

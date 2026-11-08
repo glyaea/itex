@@ -2,9 +2,3 @@ iTeX
 ====
 
 A privacy-focused LaTeX editor with PDF preview.
-
-[+] Automatic package downloads
-    Use \usepackage{...} to load packages.
-
-[ ] Keyboard shortcuts
-    Press Ctrl+S to compile a document.
