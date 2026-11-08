@@ -1,0 +1,26 @@
+* {
+	box-sizing: border-box;
+}
+
+body {
+	display: grid;
+	grid-template: auto 1fr / 1fr 1fr;
+	height: 100vh;
+	margin: 0;
+	width: 100vw;
+}
+
+button {
+	grid-column: 1 / -1;
+}
+
+textarea,
+iframe {
+	border: none;
+	height: 100%;
+	width: 100%;
+}
+
+textarea {
+	resize: none;
+}
