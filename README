@@ -1,7 +1,7 @@
 iTeX
 ====
 
-A private LaTeX editor with PDF preview.
+A privacy-focused LaTeX editor with PDF preview.
 
 [+] Automatic package downloads
     Use \usepackage{...} to load packages.
