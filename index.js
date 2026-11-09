@@ -37,40 +37,50 @@ if (typeof document === "undefined") {
 	const explorer = document.querySelector("explorer");
 	const nav = document.querySelector("nav");
 	const preview = document.querySelector("iframe");
-	const tree = document.querySelector("ul");
-	const [openFolder, createFile, createFolder, compile, remove] = nav.querySelectorAll("button");
+	const [openFolder, createFile, createFolder, remove, write] = nav.querySelectorAll("button");
 	let compiler;
 	let selected;
 	let saved = "";
+	let tree;
 	openFolder.onclick = () => run(async () => {
 		const directory = await showDirectoryPicker({mode: "readwrite"});
 		if (!discardChanges()) return;
-		const entry = await addEntry(directory, document.createElement("ul"));
-		await selectEntry(entry);
-		tree.replaceChildren(entry);
+		const replacement = new VanillaTree(document.createElement("explorer"));
+		const id = await addEntry(replacement, directory);
+		tree?.destroy();
+		tree = replacement;
+		tree.container = explorer;
+		explorer.append(tree.tree);
+		await selectEntry(id);
+		tree.open(id);
 		for (const pane of document.querySelectorAll("[hidden]")) pane.hidden = false;
 	});
 	createFile.onclick = () => run(() => createEntry("getFileHandle"));
 	createFolder.onclick = () => run(() => createEntry("getDirectoryHandle"));
-	compile.onclick = () => run(compileDocument);
+	write.onclick = () => run(writeDocument);
 	remove.onclick = () => run(async () => {
 		if (!discardChanges()) return;
-		const parent = selected.parentElement.closest("li");
-		await parent.handle.removeEntry(selected.handle.name, {recursive: true});
-		selected.remove();
+		const parent = tree.getParent(selected);
+		await tree.leafs[parent].handle.removeEntry(tree.leafs[selected].handle.name, {recursive: true});
+		tree.remove(selected);
 		await selectEntry(parent);
 	});
+	explorer.addEventListener("vtree-select", ({detail: {id}}) => {
+		if (id !== selected) run(async () => {
+			if (discardChanges()) await selectEntry(id);
+		}).then(() => tree.select(selected));
+	});
 	editor.oninput = () => {
-		selected.firstElementChild.style.fontStyle = editor.value === saved ? "" : "italic";
+		tree.getLeaf(selected).querySelector("a").style.fontStyle = editor.value === saved ? "" : "italic";
 	};
 	document.onkeydown = event => {
 		if ((event.ctrlKey || event.metaKey) && event.key === "s") {
 			event.preventDefault();
-			compile.click();
+			write.click();
 		}
 	};
 	async function run(action) {
-		compile.disabled = true;
+		write.disabled = true;
 		nav.inert = true;
 		explorer.inert = true;
 		editor.readOnly = true;
@@ -79,38 +89,33 @@ if (typeof document === "undefined") {
 		} catch (error) {
 			if (error.name !== "AbortError") alert(error.message);
 		} finally {
-			compile.disabled = editor.disabled;
+			write.disabled = editor.disabled;
 			nav.inert = false;
 			explorer.inert = false;
 			editor.readOnly = false;
 		}
 	}
-	async function addEntry(handle, list) {
-		const entry = document.createElement("li");
-		entry.handle = handle;
-		const name = document.createElement("button");
-		name.textContent = handle.name + (handle.kind === "directory" ? "/" : "");
-		name.onclick = () => run(() => {
-			if (entry !== selected && discardChanges()) return selectEntry(entry);
-		});
-		entry.append(name);
-		list.insertBefore(entry, [...list.children].find(other => other.handle.name > handle.name) ?? null);
+	async function addEntry(tree, handle, parent) {
+		const id = parent ? `${parent}/${handle.name}` : handle.name;
+		tree.add({id, label: handle.name + (handle.kind === "directory" ? "/" : ""), parent, handle});
+		const entry = tree.getLeaf(id);
+		const list = entry.parentElement;
+		list.insertBefore(entry, [...list.children].find(other => tree.leafs[other.dataset.vtreeId].handle.name > handle.name) ?? null);
 		if (handle.kind === "directory") {
-			const children = document.createElement("ul");
-			entry.append(children);
-			for await (const child of handle.values()) await addEntry(child, children);
+			for await (const child of handle.values()) await addEntry(tree, child, id);
 		}
-		return entry;
+		return id;
 	}
-	async function selectEntry(entry) {
-		const editable = entry.handle.kind === "file" && entry.handle.name.endsWith(".tex");
-		const source = editable ? await (await entry.handle.getFile()).text() : "";
-		selected?.firstElementChild.removeAttribute("style");
-		selected = entry;
-		selected.firstElementChild.style.fontWeight = "bold";
+	async function selectEntry(id) {
+		const handle = tree.leafs[id].handle;
+		const editable = handle.kind === "file" && handle.name.endsWith(".tex");
+		const source = editable ? await (await handle.getFile()).text() : "";
+		tree.getLeaf(selected, true)?.querySelector("a").removeAttribute("style");
+		selected = id;
 		editor.value = saved = source;
 		editor.disabled = !editable;
-		remove.disabled = !entry.parentElement.closest("li");
+		remove.disabled = tree.getParent(id) === null;
+		tree.select(id);
 		URL.revokeObjectURL(preview.src);
 		preview.removeAttribute("src");
 	}
@@ -120,13 +125,14 @@ if (typeof document === "undefined") {
 	async function createEntry(method) {
 		const name = prompt("Name?");
 		if (!name) return;
-		const directory = selected.handle.kind === "directory" ? selected : selected.parentElement.closest("li");
-		const list = directory.lastElementChild;
-		if ([...list.children].some(entry => entry.handle.name === name)) throw new Error("Name already exists.");
-		await addEntry(await directory.handle[method](name, {create: true}), list);
+		const directory = tree.leafs[selected].handle.kind === "directory" ? selected : tree.getParent(selected);
+		if (tree.leafs[`${directory}/${name}`]) throw new Error("Name already exists.");
+		await addEntry(tree, await tree.leafs[directory].handle[method](name, {create: true}), directory);
+		tree.open(directory);
 	}
-	async function compileDocument() {
-		const file = await selected.handle.createWritable();
+	async function writeDocument() {
+		const source = tree.leafs[selected].handle;
+		const file = await source.createWritable();
 		await file.write(editor.value);
 		await file.close();
 		saved = editor.value;
@@ -142,7 +148,13 @@ if (typeof document === "undefined") {
 			compiler.postMessage(editor.value);
 		});
 		if (!data.pdf?.length) throw new Error(data.log);
+		const directory = tree.getParent(selected);
+		const pdf = await tree.leafs[directory].handle.getFileHandle(source.name.replace(/\.tex$/, ".pdf"), {create: true});
+		const output = await pdf.createWritable();
+		await output.write(data.pdf);
+		await output.close();
+		if (!tree.leafs[`${directory}/${pdf.name}`]) await addEntry(tree, pdf, directory);
 		URL.revokeObjectURL(preview.src);
-		preview.src = URL.createObjectURL(new Blob([data.pdf], {type: "application/pdf"}));
+		preview.src = URL.createObjectURL(await pdf.getFile());
 	}
 }

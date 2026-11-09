@@ -4,7 +4,9 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>iTeX</title>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vanillatree/dist/vanillatree.css">
 	<link rel="stylesheet" href="index.css">
+	<script src="https://cdn.jsdelivr.net/npm/vanillatree/dist/vanillatree.min.js" defer></script>
 	<script src="index.js" defer></script>
 </head>
 <body>
@@ -14,13 +16,11 @@
 	<button hidden>Create file</button>
 	<button hidden>Create folder</button>
 	<button hidden>Delete file or folder</button>
-	<button hidden disabled>Compile document</button>
+	<button hidden disabled>Write document</button>
 </nav>
 
 <main>
-	<explorer hidden>
-		<ul></ul>
-	</explorer>
+	<explorer hidden></explorer>
 	<editor hidden>
 		<textarea spellcheck="false" disabled></textarea>
 	</editor>

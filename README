@@ -2,3 +2,11 @@ iTeX
 ====
 
 A privacy-focused LaTeX editor with PDF preview.
+
+Usage
+-----
+
+1. If using Brave browser, visit brave://flags/#file-system-access-api and
+   enable the File System Access API flag.
+
+2. Run python -m http.server and visit localhost:8000.

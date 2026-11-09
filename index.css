@@ -1,5 +1,4 @@
 * {
-	box-sizing: border-box;
 	margin: 0;
 	padding: 0;
 }
@@ -12,8 +11,8 @@ body {
 
 main {
 	display: flex;
-	flex: 1;
-	min-height: 0;
+	height: 100%;
+	overflow: hidden;
 }
 
 main explorer {
@@ -21,45 +20,26 @@ main explorer {
 	width: 20%;
 }
 
-main explorer ul {
-	font-family: monospace;
-	list-style: none;
-}
-
-main explorer ul ul {
-	padding-left: 2ch;
-}
-
-main explorer ul li button {
-	background: none;
-	border: none;
-	font: inherit;
-	white-space: nowrap;
-}
-
-main editor,
-main preview {
-	min-width: 0;
-}
-
 main editor {
-	flex: 3;
+	width: 48%;
 }
 
 main preview {
-	flex: 2;
+	width: 32%;
 }
 
 main editor textarea,
 main preview iframe {
-	border: none;
 	display: block;
 	height: 100%;
 	width: 100%;
 }
 
 main editor textarea {
-	background: white;
 	outline: none;
 	resize: none;
+}
+
+main editor textarea:disabled {
+	background: white;
 }
